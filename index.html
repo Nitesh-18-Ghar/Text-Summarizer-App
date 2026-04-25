@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Summarizer</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #132a13;
+            color: #070707;
+        }
+        .container{
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background: #E6E6E6;
+            border-radius: 10px; 
+            box-shadow: 0 4px 6px black;
+        }
+        h1 {
+            text-align: center;
+            color:#39393A;
+        }
+
+        h3{
+            text-align: center;
+            margin-top: -20px;
+            margin-bottom: 40px;
+        }
+
+        form {
+            display:flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        textarea {
+            height: 150px;
+            padding: 10px;
+            border: 2px solid #645c5c;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #00b4d8;
+            color: rgb(0, 0, 0);
+            border:1.5px solid rgb(228, 6, 6);
+            padding: 10px 1px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #04d5ff;
+        }
+
+        #summary-output {
+            margin-top: 15px;
+            background: #FFEDD5;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #0a0404;
+        }
+
+        #summary-heading {
+            margin-top: 0px;
+            margin-bottom: 0px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Text Summarizer</h1>
+        <h3>Using HuggingFace Transformer</h3>
+        <p>Write or Paste Your Content Of Summarization Below👇</p>
+
+        <form id="summarization-form">
+            <textarea id="dialogue-input" placeholder="What To Be Summarize....✍️" required></textarea>
+            <button type="submit">Summarize</button>
+        </form>
+
+        <div id="summary-output">
+            <h3 id="summary-heading">Content Summary</h3>
+            <p id="summary-text"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("summarization-form").addEventListener("submit", async(e) =>{
+            e.preventDeafult();       // Jitne bhi type ke default actions ho skte hain unko prevent krna
+
+            // Get References(Access) to elements
+            const dialogueInput = document.getElementById("dialogue-input");
+            const summaryText = document.getElementById("summary-text");
+            const submitButton = e.target.querySelector("button");
+
+            const dialogue = dialogueInput.value.trim();      //Trim means koi v khali spaces nhi hoga
+            if (!dialogue) return;
+
+            // Show Processing Message and Disable Button
+            summaryText.innerText = "Summarizing...";
+            submitButton.disabled = true;      // In the middle of summarizing you can't press the summarize button
+
+            // Errors aa Sakte hain runtime ke andar, koi gurantee nhi hota hai. So, uske liye try block use kiya jata hai
+            try {
+                // Send Dialogue to backend
+                const response = await fetch("/summarize/", {
+                    method:"POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringfy({ dialogue }),
+                });
+
+                if (!response.ok) {       // Jo response aya agar wo sahi nhi hai
+                    throw new Error(`Server Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                summaryText.innerText = data.summary || "No Summary Returned.";
+            } catch (err) {
+                summaryText.innerText = `Error: ${err.message}`;
+            } finally {
+                submitButton.disabled = false;      // Last mein to Enable karna hi padega for new text Summmarize
+            }
+        });
+    </script>
+</body>
+</html>
